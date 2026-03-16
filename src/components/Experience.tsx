@@ -63,7 +63,7 @@ const Experience: React.FC = () => {
     {
       logo: starsOfTechLogo,
       company: 'StarsOfTech Pvt. Ltd.',
-      title: 'Software Engineering Intern',
+      title: 'Software Engineering ',
       date: 'July 2025 – December 2025',
       location: 'Remote / Live Project',
       link: 'https://starsoftech.com/',

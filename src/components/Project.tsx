@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ExternalLink, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import NipserIcon from "../assets/nipser.jpeg"; 
@@ -23,98 +23,140 @@ const Projects: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [centerIndex, setCenterIndex] = useState(0);
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const imageIntervalRef = useRef<number | null>(null);
-  const [windowWidth, setWindowWidth] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const imageIntervalRef = useRef<number | null>(null);
+  const sliderIntervalRef = useRef<number | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
+  // Optimized resize handler
   useEffect(() => {
-    setWindowWidth(window.innerWidth);
-    setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
     
+    let resizeTimeout: number;
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setIsMobile(window.innerWidth < 768);
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(checkMobile, 100);
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsVisible(true);
-      },
-      { threshold: 0.2 }
-    );
-
-    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => {
-      if (sectionRef.current) observer.unobserve(sectionRef.current);
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
     };
   }, []);
 
-  // Start image rotation when a project is selected
+  // Optimized intersection observer
   useEffect(() => {
-    if (selectedProject && selectedProject.images && selectedProject.images.length > 1) {
+    const options = {
+      threshold: 0.1,
+      rootMargin: '50px'
+    };
+
+    observerRef.current = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        // Unobserve after first trigger
+        if (sectionRef.current && observerRef.current) {
+          observerRef.current.unobserve(sectionRef.current);
+        }
+      }
+    }, options);
+
+    if (sectionRef.current && observerRef.current) {
+      observerRef.current.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Clean up intervals
+  useEffect(() => {
+    return () => {
+      if (imageIntervalRef.current) {
+        clearInterval(imageIntervalRef.current);
+      }
+      if (sliderIntervalRef.current) {
+        clearInterval(sliderIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Optimized slider effect
+  useEffect(() => {
+    if (sliderIntervalRef.current) {
+      clearInterval(sliderIntervalRef.current);
+    }
+
+    sliderIntervalRef.current = window.setInterval(() => {
+      setCenterIndex(prev => (prev + 1) % 5);
+    }, 3000);
+
+    return () => {
+      if (sliderIntervalRef.current) {
+        clearInterval(sliderIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Optimized image rotation
+  const startImageRotation = useCallback(() => {
+    if (imageIntervalRef.current) {
+      clearInterval(imageIntervalRef.current);
+    }
+    
+    if (!selectedProject?.images || selectedProject.images.length <= 1) return;
+    
+    imageIntervalRef.current = window.setInterval(() => {
+      if (!isImageHovered && selectedProject?.images) {
+        setCurrentImageIndex(prev => (prev + 1) % selectedProject.images!.length);
+      }
+    }, 3000);
+  }, [selectedProject, isImageHovered]);
+
+  // Handle project selection
+  useEffect(() => {
+    if (selectedProject?.images && selectedProject.images.length > 1) {
       startImageRotation();
     }
     
     return () => {
       if (imageIntervalRef.current) {
         clearInterval(imageIntervalRef.current);
+        imageIntervalRef.current = null;
       }
     };
-  }, [selectedProject]);
+  }, [selectedProject, startImageRotation]);
 
-  // Image slider effect for project cards
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCenterIndex((prev) => (prev + 1) % 5);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const startImageRotation = () => {
-    if (imageIntervalRef.current) {
-      clearInterval(imageIntervalRef.current);
-    }
-    
-    imageIntervalRef.current = window.setInterval(() => {
-      if (!isImageHovered && selectedProject?.images && selectedProject.images.length > 0) {
-        setCurrentImageIndex(prev => 
-          (prev + 1) % selectedProject.images!.length
-        );
-      }
-    }, 3000);
-  };
-
-  const stopImageRotation = () => {
+  const stopImageRotation = useCallback(() => {
     if (imageIntervalRef.current) {
       clearInterval(imageIntervalRef.current);
       imageIntervalRef.current = null;
     }
-  };
+  }, []);
 
-  const goToNextImage = () => {
+  const goToNextImage = useCallback(() => {
     if (selectedProject?.images && selectedProject.images.length > 0) {
-      setCurrentImageIndex((prev) => 
-        (prev + 1) % selectedProject.images!.length
-      );
+      setCurrentImageIndex(prev => (prev + 1) % selectedProject.images!.length);
     }
-  };
+  }, [selectedProject]);
 
-  const goToPrevImage = () => {
+  const goToPrevImage = useCallback(() => {
     if (selectedProject?.images && selectedProject.images.length > 0) {
-      setCurrentImageIndex((prev) => 
+      setCurrentImageIndex(prev => 
         prev === 0 ? selectedProject.images!.length - 1 : prev - 1
       );
     }
-  };
+  }, [selectedProject]);
 
-  const projects: Project[] = [
+  // Memoized project data
+  const projects = useRef<Project[]>([
     {
       name: "Nipser – Scholarship Portal",
       techStack: [
@@ -233,10 +275,6 @@ The site is optimized for performance with lazy loading, image optimization, and
         "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
       ]
     },
-
-    
-  
-
     {
       name: "Crime Portal",
       techStack: [
@@ -272,210 +310,142 @@ The site is optimized for performance with lazy loading, image optimization, and
         "https://i.pinimg.com/736x/61/fc/1f/61fc1fe47a8a9ef8788790b164e95bc3.jpg",
         "https://i.pinimg.com/1200x/6b/f8/2d/6bf82ddaee812ba5cf46cc5d80e0968d.jpg",
         "https://i.pinimg.com/1200x/a7/5b/cc/a75bcc88195339696dbb2808f28371d9.jpg",
-       
       ]
     }
-    
-  ];
+  ]).current;
 
-  // Images for the slider
-  const sliderImages = [
+  // Memoized slider images
+  const sliderImages = useRef([
     "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1522881193457-37ae97c905bf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
-  ];
+  ]).current;
 
-  // Enhanced Particles animation
-  const particles = Array.from({ length: isMobile ? 20 : 40 });
-  const particleVariants:Variants = {
-    animate: (i: number) => ({
-      y: [0, -40, 0],
-      x: [0, Math.random() * 80 - 40, 0],
-      opacity: [0, 0.7, 0],
-      scale: [0, 1, 0],
-      transition: {
-        repeat: Infinity,
-        duration: 5 + Math.random() * 6,
-        delay: i * 0.15,
-        ease: "easeInOut",
-      },
-    }),
-  };
-
-  const floatingIcons = [
-    { icon: "🚀", size: "text-xl sm:text-2xl", delay: 0 },
-    { icon: "⚛️", size: "text-2xl sm:text-3xl", delay: 0.5 },
-    { icon: "💻", size: "text-xl sm:text-2xl", delay: 1 },
-    { icon: "🔒", size: "text-2xl sm:text-3xl", delay: 1.5 },
-    { icon: "📊", size: "text-xl sm:text-2xl", delay: 2 },
-    { icon: "🌐", size: "text-2xl sm:text-3xl", delay: 2.5 },
-    { icon: "🔧", size: "text-xl sm:text-2xl", delay: 3 },
-    { icon: "📱", size: "text-2xl sm:text-3xl", delay: 3.5 },
-  ];
-
-  const floatingIconVariants:Variants = {
-    animate: (delay: number) => ({
-      y: [0, -50, 0],
-      rotate: [0, 15, 0],
-      opacity: [0, 0.8, 0],
-      transition: {
-        repeat: Infinity,
-        duration: 10,
-        delay,
-        ease: "easeInOut",
-      },
-    }),
-  };
-
+  // Optimized animations
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } },
-  };
-
-  const itemVariants:Variants = {
-    hidden: { y: 30, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: "easeOut" } },
-  };
-
-  const modalBackdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.3 } },
-  };
-
-  const modalContentVariants:Variants = {
-    hidden: { opacity: 0, scale: 0.8, y: 50 },
-    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.5, type: "spring", damping: 25 } },
-    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
-  };
-
-  const techChipVariants:Variants = {
-    hidden: { scale: 0, opacity: 0 },
-    visible: (i: number) => ({ scale: 1, opacity: 1, transition: { delay: i * 0.1, type: "spring", stiffness: 300, damping: 20 } }),
-  };
-
-  const imageVariants = {
-    enter: (direction: number) => ({
-      opacity: 0,
-      x: direction > 0 ? 300 : -300,
-    }),
-    center: {
-      opacity: 1,
-      x: 0,
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        staggerChildren: 0.15, 
+        delayChildren: 0.1 
+      } 
     },
-    exit: (direction: number) => ({
-      opacity: 0,
-      x: direction < 0 ? 300 : -300,
-    })
   };
 
-  // Calculate slider image offset based on screen size
-  const getSliderOffset = () => {
-    if (windowWidth < 640) return 60;
-    if (windowWidth < 768) return 80;
-    if (windowWidth < 1024) return 120;
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1, 
+      transition: { 
+        duration: 0.4, 
+        ease: "easeOut" 
+      } 
+    },
+  };
+
+  const modalContentVariants: Variants = {
+    hidden: { opacity: 0, scale: 0.9, y: 20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0, 
+      transition: { 
+        duration: 0.3, 
+        ease: "easeOut" 
+      } 
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.9, 
+      transition: { 
+        duration: 0.2 
+      } 
+    },
+  };
+
+  const techChipVariants: Variants = {
+    hidden: { scale: 0.8, opacity: 0 },
+    visible: (i: number) => ({ 
+      scale: 1, 
+      opacity: 1, 
+      transition: { 
+        delay: i * 0.05, 
+        duration: 0.2 
+      } 
+    }),
+  };
+
+  // Optimized slider calculations
+  const getSliderOffset = useCallback(() => {
+    if (typeof window === 'undefined') return 160;
+    if (window.innerWidth < 640) return 60;
+    if (window.innerWidth < 768) return 80;
+    if (window.innerWidth < 1024) return 120;
     return 160;
-  };
+  }, []);
 
-  // Calculate slider image size based on screen size
-  const getSliderImageSize = () => {
-    if (windowWidth < 640) return { width: '100px', height: '140px' };
-    if (windowWidth < 768) return { width: '120px', height: '160px' };
-    if (windowWidth < 1024) return { width: '160px', height: '200px' };
+  const getSliderImageSize = useCallback(() => {
+    if (typeof window === 'undefined') return { width: '200px', height: '240px' };
+    if (window.innerWidth < 640) return { width: '100px', height: '140px' };
+    if (window.innerWidth < 768) return { width: '120px', height: '160px' };
+    if (window.innerWidth < 1024) return { width: '160px', height: '200px' };
     return { width: '200px', height: '240px' };
-  };
+  }, []);
+
+  // Handle modal close
+  const handleCloseModal = useCallback(() => {
+    setSelectedProject(null);
+    stopImageRotation();
+    setIsImageHovered(false);
+    setCurrentImageIndex(0);
+  }, [stopImageRotation]);
+
+  // Handle image navigation
+  const handleImageNavigate = useCallback((direction: 'prev' | 'next') => {
+    if (direction === 'next') {
+      goToNextImage();
+    } else {
+      goToPrevImage();
+    }
+  }, [goToNextImage, goToPrevImage]);
 
   return (
     <section
       id="projects"
       ref={sectionRef}
-      className="relative w-full px-4 py-12 md:py-16 lg:py-20 overflow-hidden bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 backdrop-blur-md border border-slate-700/50 shadow-2xl"
-      style={{ marginTop: 0 }}
+      className="relative w-full px-4 py-12 md:py-16 lg:py-20 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 shadow-2xl"
+      style={{ marginTop: 0, willChange: 'transform' }}
     >
-      {/* Enhanced Glass-like Background Effect */}
-      <div className="absolute inset-0 -z-20 overflow-hidden">
-        <div className="absolute inset-0 bg-glass-effect bg-[size:100px_100px] opacity-30"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-400/5 via-purple-500/5 to-cyan-400/5 backdrop-blur-3xl"></div>
-      </div>
+      {/* Simplified background */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90"></div>
 
-      {/* Enhanced Particles Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        {particles.map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-gradient-to-r from-teal-400/30 to-purple-500/30"
-            style={{
-              width: Math.random() * (isMobile ? 40 : 100) + 20,
-              height: Math.random() * (isMobile ? 40 : 100) + 20,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              filter: "blur(12px)",
-            }}
-            custom={i}
-            variants={particleVariants}
-            animate={isMobile ? {} : "animate"}
-          />
-        ))}
-      </div>
-
-      {/* Animated Grid Background */}
-      <div className="absolute inset-0 -z-20 opacity-20">
-        <div className="absolute inset-0 bg-grid-white/10 bg-[size:40px_40px]"></div>
-        <motion.div 
-          className="absolute inset-0 bg-gradient-to-b from-slate-900/0 to-slate-900"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        />
-      </div>
-
-      {/* Floating Icons */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        {floatingIcons.map((item, i) => (
-          <motion.div
-            key={i}
-            className={`absolute ${item.size} text-teal-400/30`}
-            style={{
-              top: `${10 + (i * 12) % 80}%`,
-              left: `${5 + (i * 15) % 90}%`,
-            }}
-            custom={item.delay}
-            variants={floatingIconVariants}
-            animate={isMobile ? {} : "animate"}
-          >
-            {item.icon}
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Animated Light Beams */}
-      <div className="absolute inset-0 -z-10 overflow-hidden opacity-30">
-        <motion.div 
-          className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-teal-400/10 to-transparent"
-          animate={{ y: [0, 20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-purple-500/10 to-transparent"
-          animate={{ y: [0, -20, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-      </div>
+      {/* Grid background with reduced opacity */}
+      <div 
+        className="absolute inset-0 -z-5 opacity-5" 
+        style={{
+          backgroundImage: `linear-gradient(to right, #64748b 1px, transparent 1px),
+                            linear-gradient(to bottom, #64748b 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+        }}
+      />
 
       {/* Projects Container */}
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Title Section with Improved Spacing */}
+      <div className="max-w-7xl mx-auto relative">
+        {/* Title Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }} 
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.5 }}
           className="text-center mb-10 md:mb-14 lg:mb-16 pt-4"
         >
           <motion.h2
             initial={{ opacity: 0, y: 10 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 md:mb-5"
           >
             Our Latest <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">Projects</span>
@@ -483,7 +453,7 @@ The site is optimized for performance with lazy loading, image optimization, and
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
             className="text-slate-300 max-w-2xl mx-auto text-base md:text-lg px-4 md:px-6 leading-relaxed"
           >
             Empowering businesses with next-gen software solutions. From startups to enterprises, we build scalable, secure, and innovative digital solutions.
@@ -491,47 +461,46 @@ The site is optimized for performance with lazy loading, image optimization, and
         </motion.div>
 
         {/* Image Slider Section */}
-        <section className="py-6 md:py-8 lg:py-10 flex flex-col items-center my-4 p-4 lg:p-0">
+        <div className="py-6 md:py-8 lg:py-10 flex flex-col items-center my-4 p-4 lg:p-0">
           <div className="relative flex items-center justify-center w-full h-40 sm:h-52 md:h-60 lg:h-72 overflow-hidden">
             {sliderImages.map((img, i) => {
               const offset = i - centerIndex;
-
-              const adjustedOffset =
-                offset < -Math.floor(sliderImages.length / 2)
-                  ? offset + sliderImages.length
-                  : offset > Math.floor(sliderImages.length / 2)
-                  ? offset - sliderImages.length
-                  : offset;
-
+              const adjustedOffset = offset < -2 ? offset + 5 : offset > 2 ? offset - 5 : offset;
               const absOffset = Math.abs(adjustedOffset);
               const imageSize = getSliderImageSize();
+              const offsetValue = getSliderOffset();
 
               return (
                 <motion.img
                   key={i}
                   src={img}
                   alt={`slide-${i}`}
-                  className="absolute rounded-lg sm:rounded-xl shadow-lg border border-slate-700/50 backdrop-blur-sm"
+                  className="absolute rounded-lg sm:rounded-xl shadow-lg border border-slate-700/50 bg-slate-800"
                   animate={{
                     scale: absOffset === 0 ? 1 : 0.8,
-                    x: adjustedOffset * getSliderOffset(),
-                    zIndex: absOffset === 0 ? 10 : -absOffset,
+                    x: adjustedOffset * offsetValue,
+                    zIndex: 5 - absOffset,
                     opacity: absOffset > 2 ? 0 : 1 - absOffset * 0.3,
                   }}
-                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 180, 
+                    damping: 20,
+                    mass: 1
+                  }}
                   style={{
                     width: imageSize.width,
                     height: imageSize.height,
                     objectFit: "cover",
-                    cursor: "pointer",
                   }}
+                  loading="lazy"
                 />
               );
             })}
           </div>
-        </section>
+        </div>
 
-        {/* Projects Grid - Updated to 2x2 layout for better spacing */}
+        {/* Projects Grid */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -542,21 +511,18 @@ The site is optimized for performance with lazy loading, image optimization, and
             <motion.div
               key={idx}
               variants={itemVariants}
-              className="bg-slate-800/30 backdrop-blur-md rounded-xl p-6 sm:p-7 border border-slate-700/50 hover:border-teal-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/10 cursor-pointer relative overflow-hidden group"
-              whileHover={isMobile ? {} : { scale: 1.02, y: -5, transition: { duration: 0.3 } }}
+              className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-teal-400/30 transition-all duration-200 cursor-pointer group"
+              whileHover={!isMobile ? { y: -3 } : {}}
+              onClick={() => {
+                setSelectedProject(project);
+                setCurrentImageIndex(0);
+              }}
             >
-              {/* Card content */}
               <div className="flex items-center gap-3 mb-4">
-    <motion.div 
-  className="flex items-center justify-center"
-  whileHover={isMobile ? {} : { rotate: 360, scale: 1.2 }} 
-  transition={{ duration: 0.5 }}
-  style={{ width: 80, height: 80 }} // increase size as needed
->
-  {project.icon}
-</motion.div>
-
-                <h3 className="text-xl sm:text-2xl font-semibold text-white group-hover:text-teal-400 transition-colors duration-300">
+                <div className="flex-shrink-0">
+                  {project.icon}
+                </div>
+                <h3 className="text-xl sm:text-2xl font-semibold text-white group-hover:text-teal-400 transition-colors duration-200">
                   {project.name}
                 </h3>
               </div>
@@ -569,57 +535,44 @@ The site is optimized for performance with lazy loading, image optimization, and
                     variants={techChipVariants}
                     initial="hidden"
                     animate={isVisible ? "visible" : "hidden"}
-                    className="bg-teal-500/20 text-teal-400 text-xs px-3 py-1.5 rounded-full backdrop-blur-sm hover:bg-teal-500/30 transition-colors duration-300 border border-teal-400/20"
-                    whileHover={isMobile ? {} : { scale: 1.05 }}
+                    className="bg-teal-500/20 text-teal-400 text-xs px-3 py-1 rounded-full border border-teal-400/20"
                   >
                     {tech}
                   </motion.span>
                 ))}
               </div>
 
-              <p className="text-slate-300 text-base sm:text-lg mb-4 group-hover:text-slate-200 transition-colors duration-300 leading-relaxed">
+              <p className="text-slate-300 text-base mb-4 leading-relaxed">
                 {project.description}
               </p>
 
-              <ul className="list-disc list-inside space-y-2 text-slate-300 text-sm sm:text-base group-hover:text-slate-200 transition-colors duration-300 mb-6">
+              <ul className="space-y-2 text-slate-300 text-sm mb-6">
                 {project.points.map((point, i) => (
-                  <motion.li key={i} initial={{ opacity: 0, x: -10 }} animate={isVisible ? { opacity: 1, x: 0 } : {}} transition={{ delay: 0.6 + i * 0.1 }}>
-                    {point}
-                  </motion.li>
+                  <li key={i} className="flex items-start">
+                    <span className="text-teal-400 mr-2">•</span>
+                    <span>{point}</span>
+                  </li>
                 ))}
               </ul>
 
-              <div className="mt-6 flex gap-3 flex-wrap">
-                <motion.button
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setCurrentImageIndex(0);
-                  }}
-                  className="flex items-center gap-2 bg-teal-600/80 hover:bg-teal-700/80 text-white text-sm font-medium px-4 sm:px-5 py-2.5 sm:py-3 rounded-full transition group/btn relative overflow-hidden backdrop-blur-sm border border-teal-500/30"
-                  whileHover={isMobile ? {} : { scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <div className="flex gap-3 flex-wrap">
+                <button
+                  className="flex items-center gap-2 bg-teal-600/80 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-full transition"
                 >
-                  <span className="relative z-10">View Details</span>
-                  <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="relative z-10">
-                    <ExternalLink size={16} />
-                  </motion.span>
-                  <div className="absolute inset-0 -z-10 bg-gradient-to-r from-teal-600/80 to-teal-700/80 group-hover/btn:from-teal-700/80 group-hover/btn:to-teal-800/80 transition-all duration-300"></div>
-                </motion.button>
+                  <span>View Details</span>
+                  <ExternalLink size={16} />
+                </button>
                 {project.url && project.url !== "#" && (
-                  <motion.a
+                  <a
                     href={project.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-slate-700/80 hover:bg-slate-600/80 text-slate-300 hover:text-white text-sm font-medium px-4 sm:px-5 py-2.5 sm:py-3 rounded-full transition group/btn relative overflow-hidden backdrop-blur-sm border border-slate-600/50"
-                    whileHover={isMobile ? {} : { scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2 bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-white text-sm font-medium px-4 py-2.5 rounded-full transition"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <span className="relative z-10">Visit Site</span>
-                    <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="relative z-10">
-                      <ExternalLink size={16} />
-                    </motion.span>
-                    <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-700/80 to-slate-600/80 group-hover/btn:from-slate-600/80 group-hover/btn:to-slate-700/80 transition-all duration-300"></div>
-                  </motion.a>
+                    <span>Visit Site</span>
+                    <ExternalLink size={16} />
+                  </a>
                 )}
               </div>
             </motion.div>
@@ -627,22 +580,17 @@ The site is optimized for performance with lazy loading, image optimization, and
         </motion.div>
 
         {/* Modal */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {selectedProject && (
             <motion.div
-              className="fixed inset-0 z-[1000] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-5"
-              variants={modalBackdropVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              onClick={() => {
-                setSelectedProject(null);
-                stopImageRotation();
-                setIsImageHovered(false);
-              }}
+              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseModal}
             >
               <motion.div
-                className="bg-slate-800/80 backdrop-blur-lg w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-700/50"
+                className="bg-slate-800/90 backdrop-blur-md w-full max-w-2xl lg:max-w-4xl rounded-xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto border border-slate-700/50"
                 variants={modalContentVariants}
                 initial="hidden"
                 animate="visible"
@@ -650,137 +598,100 @@ The site is optimized for performance with lazy loading, image optimization, and
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
-                  onClick={() => {
-                    setSelectedProject(null);
-                    stopImageRotation();
-                    setIsImageHovered(false);
-                  }}
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-300 hover:text-teal-400 transition z-10 bg-slate-700/50 backdrop-blur-sm p-1 rounded-full border border-slate-600/50"
+                  onClick={handleCloseModal}
+                  className="absolute top-3 right-3 text-slate-300 hover:text-teal-400 transition z-10"
                   aria-label="Close modal"
                 >
-                  <X size={22} className="sm:w-6 sm:h-6" />
+                  <X size={24} />
                 </button>
 
-                <div className="flex items-center gap-3 mb-4 sm:mb-5">
-                  <motion.div 
-                    className="w-10 h-10 rounded-lg bg-slate-700/50 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-slate-600/50"
-                    whileHover={{ rotate: 360, scale: 1.1 }} 
-                    transition={{ duration: 0.5 }}
-                  >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-slate-700/50 flex items-center justify-center overflow-hidden">
                     {selectedProject.icon}
-                  </motion.div>
+                  </div>
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{selectedProject.name}</h3>
                 </div>
 
                 {/* Image Gallery */}
                 {selectedProject.images && selectedProject.images.length > 0 && (
                   <div 
-                    className="relative h-48 sm:h-56 md:h-64 lg:h-72 mb-4 sm:mb-5 md:mb-6 rounded-lg md:rounded-xl overflow-hidden border border-slate-700/50"
-                    onMouseEnter={() => {
-                      setIsImageHovered(true);
-                      stopImageRotation();
-                    }}
-                    onMouseLeave={() => {
-                      setIsImageHovered(false);
-                      startImageRotation();
-                    }}
-                    onTouchStart={() => {
-                      setIsImageHovered(true);
-                      stopImageRotation();
-                    }}
-                    onTouchEnd={() => {
-                      setIsImageHovered(false);
-                      startImageRotation();
-                    }}
+                    className="relative h-48 sm:h-56 md:h-64 lg:h-72 mb-4 rounded-lg overflow-hidden bg-slate-900"
+                    onMouseEnter={() => setIsImageHovered(true)}
+                    onMouseLeave={() => setIsImageHovered(false)}
                   >
-                    <AnimatePresence initial={false} custom={1}>
-                      <motion.img
-                        key={currentImageIndex}
-                        src={selectedProject.images[currentImageIndex]}
-                        alt={`${selectedProject.name} screenshot ${currentImageIndex + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        custom={1}
-                        variants={imageVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.5 }}
-                      />
-                    </AnimatePresence>
+                    <img
+                      src={selectedProject.images[currentImageIndex]}
+                      alt={`${selectedProject.name} screenshot`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                     
-                    {/* Navigation arrows */}
                     {selectedProject.images.length > 1 && (
                       <>
                         <button
-                          className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 bg-slate-900/70 hover:bg-slate-900 text-white p-1.5 sm:p-2 rounded-full transition-all duration-300 z-10 backdrop-blur-sm border border-slate-700/50"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition"
                           onClick={(e) => {
                             e.stopPropagation();
-                            goToPrevImage();
+                            handleImageNavigate('prev');
                           }}
                           aria-label="Previous image"
                         >
-                          <ChevronLeft size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                          <ChevronLeft size={20} />
                         </button>
                         <button
-                          className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 bg-slate-900/70 hover:bg-slate-900 text-white p-1.5 sm:p-2 rounded-full transition-all duration-300 z-10 backdrop-blur-sm border border-slate-700/50"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition"
                           onClick={(e) => {
                             e.stopPropagation();
-                            goToNextImage();
+                            handleImageNavigate('next');
                           }}
                           aria-label="Next image"
                         >
-                          <ChevronRight size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                          <ChevronRight size={20} />
                         </button>
+                        
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                          {selectedProject.images.map((_, index) => (
+                            <button
+                              key={index}
+                              className={`w-2 h-2 rounded-full transition-all ${
+                                index === currentImageIndex ? 'bg-teal-400' : 'bg-slate-400/50'
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentImageIndex(index);
+                              }}
+                              aria-label={`View image ${index + 1}`}
+                            />
+                          ))}
+                        </div>
                       </>
-                    )}
-                    
-                    {/* Image navigation dots */}
-                    {selectedProject.images.length > 1 && (
-                      <div className="absolute bottom-2 sm:bottom-3 left-0 right-0 flex justify-center gap-1.5 sm:gap-2 z-10">
-                        {selectedProject.images.map((_, index) => (
-                          <button
-                            key={index}
-                            className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all ${
-                              index === currentImageIndex ? 'bg-teal-400' : 'bg-slate-400/70'
-                            }`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex(index);
-                            }}
-                            aria-label={`View image ${index + 1}`}
-                          />
-                        ))}
-                      </div>
                     )}
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2 mb-4 sm:mb-5 md:mb-6">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {selectedProject.techStack.map((tech, i) => (
-                    <span key={i} className="bg-teal-500/20 text-teal-400 text-xs sm:text-sm font-medium px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full backdrop-blur-sm border border-teal-400/20">
+                    <span key={i} className="bg-teal-500/20 text-teal-400 text-xs sm:text-sm px-3 py-1 rounded-full">
                       {tech}
                     </span>
                   ))}
                 </div>
 
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-slate-300 whitespace-pre-line leading-relaxed text-sm sm:text-base">{selectedProject.details}</p>
+                <div className="text-slate-300 whitespace-pre-line leading-relaxed text-sm sm:text-base">
+                  {selectedProject.details}
                 </div>
 
                 {selectedProject.url && selectedProject.url !== "#" && (
                   <div className="mt-6 flex justify-center">
-                    <motion.a
+                    <a
                       href={selectedProject.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-teal-600/80 hover:bg-teal-700/80 text-white font-medium px-6 py-3 rounded-full transition group/btn relative overflow-hidden backdrop-blur-sm border border-teal-500/30"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 py-3 rounded-full transition"
                     >
-                      <span className="relative z-10">Visit Live Project</span>
-                      <ExternalLink size={18} className="relative z-10" />
-                      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-teal-600/80 to-teal-700/80 group-hover/btn:from-teal-700/80 group-hover/btn:to-teal-800/80 transition-all duration-300"></div>
-                    </motion.a>
+                      <span>Visit Live Project</span>
+                      <ExternalLink size={18} />
+                    </a>
                   </div>
                 )}
               </motion.div>

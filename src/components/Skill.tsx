@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BrainCircuit, Code, Server, Database, Settings, Languages } from 'lucide-react';
-import { FaReact, FaHtml5, FaCss3Alt, FaBootstrap, FaJava, FaNodeJs, FaPython, FaGitAlt, FaGithub, FaFigma } from 'react-icons/fa';
-import { SiJavascript, SiTailwindcss, SiSpring, SiExpress, SiMysql, SiPostgresql, SiMongodb, SiSwagger, SiPostman, SiIntellijidea, SiJson } from 'react-icons/si';
+import { FaReact, FaHtml5, FaCss3Alt,  FaJava,  FaPython, FaGitAlt, FaGithub, FaFigma } from 'react-icons/fa';
+import { SiJavascript, SiTailwindcss, SiSpring, SiExpress, SiMysql, SiPostgresql,  SiSwagger, SiPostman, SiIntellijidea} from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 
 // Define types
@@ -45,21 +45,18 @@ export default function Skills() {
       { name: 'HTML5', description: 'Semantic and accessible web structures, SEO, Alt, Forms', icon: <FaHtml5 className="text-orange-500" /> },
       { name: 'CSS3', description: 'Modern layouts and animations, Flexbox, Grid, SASS', icon: <FaCss3Alt className="text-blue-500" /> },
       { name: 'Tailwind', description: 'Utility-first CSS framework, PostCSS, Design UI', icon: <SiTailwindcss className="text-sky-400" /> },
-      { name: 'Bootstrap', description: 'Responsive framework with component library', icon: <FaBootstrap className="text-purple-500" /> },
+
     ],
     backend: [
       { name: 'Java', description: 'Object-oriented programming, Spring ecosystem', icon: <FaJava className="text-red-500" /> },
       { name: 'Spring', description: 'Enterprise application framework, Boot, MVC', icon: <SiSpring className="text-green-500" /> },
-      { name: 'Node.js', description: 'Server-side JavaScript runtime', icon: <FaNodeJs className="text-green-400" /> },
       { name: 'Express.js', description: 'Web application framework for Node.js', icon: <SiExpress className="text-gray-300" /> },
       { name: 'REST API', description: 'Designing and building RESTful services', icon: <Server className="text-blue-400" size={20} /> },
-      { name: 'JSON Server', description: 'Mock REST API with zero coding', icon: <SiJson className="text-yellow-400" /> },
       { name: 'Python', description: 'Scripting, automation, and backend development', icon: <FaPython className="text-blue-400" /> },
     ],
     database: [
       { name: 'MySQL', description: 'Relational database management', icon: <SiMysql className="text-blue-400" /> },
       { name: 'PostgreSQL', description: 'Advanced open-source relational database', icon: <SiPostgresql className="text-sky-600" /> },
-      { name: 'MongoDB', description: 'NoSQL document-oriented database', icon: <SiMongodb className="text-green-500" /> },
     ],
     tools: [
       { name: 'Git', description: 'Version control system', icon: <FaGitAlt className="text-orange-500" /> },

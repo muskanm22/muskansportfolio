@@ -27,9 +27,9 @@ const Education: React.FC = () => {
       degree: "MCA",
       institute: "D.Y. Patil Agriculture & Technical University, Talsande",
       university: "D.Y. Patil University, Pune",
-      year: "2023 – Present",
-      score: "-",
-      cgpa: "-",
+      year: "2023 – 2025",
+      score: "72.58%",
+      cgpa: "7.68",
       icon: <Laptop className="text-teal-400" size={28} />,
     },
     {
