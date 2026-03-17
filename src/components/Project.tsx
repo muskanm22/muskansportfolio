@@ -4,7 +4,9 @@ import { motion, AnimatePresence, type Variants } from "framer-motion";
 import NipserIcon from "../assets/nipser.jpeg"; 
 import SchoolIcon from "../assets/SMS.jpeg";
 import StarsIcon from "../assets/StarSoftech (1).png";
-import CrimePortalIcon from "../assets/kanun.jpg"; 
+import CrimePortalIcon from "../assets/kanun.jpg";
+import SharpTradersIcon from "../assets/sharptrader.jpeg"; 
+import CaIcon from "../assets/CA.png"; 
 
 interface Project {
   name: string;
@@ -95,7 +97,7 @@ const Projects: React.FC = () => {
     }
 
     sliderIntervalRef.current = window.setInterval(() => {
-      setCenterIndex(prev => (prev + 1) % 5);
+      setCenterIndex(prev => (prev + 1) % 7); // Updated to 7 for new projects
     }, 3000);
 
     return () => {
@@ -155,7 +157,7 @@ const Projects: React.FC = () => {
     }
   }, [selectedProject]);
 
-  // Memoized project data
+  // Memoized project data (added 2 new projects)
   const projects = useRef<Project[]>([
     {
       name: "Nipser – Scholarship Portal",
@@ -257,9 +259,9 @@ Our team followed agile development practices with two-week sprints, continuous 
       url: "https://starsoftech.com/",
       details: `The Stars of Tech official website was designed to represent our brand and showcase our capabilities to potential clients. The project was developed by our in-house team over 2 months.
 
-The frontend was built using **React.js with TypeScript** for type safety and better development experience. We used **Tailward CSS** for styling, ensuring a consistent and responsive design across all device sizes.
+The frontend was built using **React.js with TypeScript** for type safety and better development experience. We used **Tailwind CSS** for styling, ensuring a consistent and responsive design across all device sizes.
 
-The backend was powered by **Spring Boot** with Express, providing a fast and efficient server environment. For content management, we implemented a custom CMS that allows our team to easily update content without technical knowledge.
+The backend was powered by **Spring Boot**, providing a fast and efficient server environment. For content management, we implemented a custom CMS that allows our team to easily update content without technical knowledge.
 
 Key sections include:
 - **Portfolio Showcase**: Highlighting our successful projects with case studies
@@ -311,16 +313,142 @@ The site is optimized for performance with lazy loading, image optimization, and
         "https://i.pinimg.com/1200x/6b/f8/2d/6bf82ddaee812ba5cf46cc5d80e0968d.jpg",
         "https://i.pinimg.com/1200x/a7/5b/cc/a75bcc88195339696dbb2808f28371d9.jpg",
       ]
+    },
+    {
+      name: "Sharp Traders - Sanitary & Bathware Shop",
+      techStack: [
+        "TypeScript",
+        "React",
+        "Tailwind CSS",
+        "Spring Boot",
+        "PostgreSQL",
+        "Swagger UI",
+        "REST APIs",
+        "JWT Authentication",
+        "Redux Toolkit",
+        "GitHub"
+      ],
+      icon: <img src={SharpTradersIcon} alt="Sharp Traders Icon" className="w-12 h-12" />,
+      description: "A comprehensive e-commerce platform for sanitary, plumbing, and bathware products with secure payment integration and admin dashboard.",
+      points: [
+        "Full-stack e-commerce solution with product catalog and inventory management.",
+        "Secure user authentication and role-based access control (Admin/Customer).",
+        "Shopping cart functionality with order tracking and payment gateway integration.",
+        "Admin dashboard for product management, order processing, and sales analytics.",
+      ],
+      url: "https://sharp-traders.com", // Replace with actual URL
+      details: `Sharp Traders is a modern e-commerce platform developed for a sanitary, plumbing, and bathware retail business. The project was built over 3 months using Spring Boot for the backend and React with TypeScript for the frontend.
+
+**Backend Architecture:**
+- Built with **Spring Boot** and **PostgreSQL** for robust data management
+- RESTful APIs with **Swagger UI** documentation
+- **JWT authentication** for secure user sessions
+- Image storage and management system for product photos
+- Inventory management with real-time stock updates
+
+**Frontend Features:**
+- **React with TypeScript** for type-safe component development
+- **Redux Toolkit** for efficient state management
+- **Tailwind CSS** for responsive and modern UI design
+- Product filtering by categories (Sanitary, Plumbing, Bathware)
+- Shopping cart with persistent storage
+- Secure checkout process with payment gateway integration
+- Order history and tracking for customers
+
+**Admin Dashboard:**
+- Product management (Add, Edit, Delete products)
+- Category management
+- Order processing and status updates
+- Customer management
+- Sales reports and analytics
+- Inventory alerts for low stock
+
+The platform handles hundreds of products across multiple categories including sanitary ware, bathroom fittings, plumbing supplies, tiles, and accessories. The system ensures smooth transactions, real-time inventory updates, and provides a seamless shopping experience for customers.`,
+      images: [
+         "https://content.jdmagicbox.com/v2/comp/pune/n9/020pxx20.xx20.250702115652.b8n9/catalogue/pooja-sanitaryware-dhanori-pune-sanitaryware-dealers-xemw54ysg5.jpg",
+ 
+        "https://i0.wp.com/uchify.com/wp-content/uploads/2024/11/bathroom-supply-shops-pro-field.png?resize=753%2C488&ssl=1",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4KNNo-BH4l-FW943kNutz8jc627BkbE4qUg&s",
+               "https://img.freepik.com/premium-photo/photo-wellorganized-plumbing-supply-store_1055425-47501.jpg"
+      ]
+    },
+    {
+      name: "CA & Associates - Professional Website",
+      techStack: [
+        "HTML5",
+        "CSS3",
+        "JavaScript",
+        "Bootstrap 5",
+        "jQuery",
+        "AOS Animation",
+        "Font Awesome",
+        "Google Maps API",
+        "Contact Form Integration"
+      ],
+      icon: <img src={CaIcon} alt="CA Website Icon" className="w-12 h-12" />,
+      description: "A professional, responsive static website for a Chartered Accountant firm showcasing services, expertise, and client resources.",
+      points: [
+        "Clean, professional design with modern UI/UX principles.",
+        "Fully responsive layout optimized for all devices.",
+        "Service pages for Audit, Taxation, GST, and Financial Consulting.",
+        "Interactive elements with AOS scroll animations.",
+        "Contact form with validation and email integration.",
+        "Google Maps integration for office location.",
+        "SEO optimized with meta tags and semantic HTML.",
+      ],
+      url: "https://ca-associates.com", // Replace with actual URL
+      details: `The CA & Associates website is a professional static website developed for a Chartered Accountant firm. Built with pure HTML, CSS, and JavaScript, this project focuses on creating a trustworthy and professional online presence for financial services.
+
+**Frontend Technologies:**
+- **HTML5** with semantic markup for better SEO
+- **CSS3** with custom properties and modern layouts
+- **Bootstrap 5** for responsive grid system and components
+- **JavaScript** for interactive elements and form validation
+- **jQuery** for DOM manipulation and AJAX requests
+- **AOS (Animate on Scroll)** library for smooth scroll animations
+
+**Key Sections:**
+- **Hero Section**: Professional introduction with call-to-action
+- **Services**: Detailed service pages including:
+  - Audit & Assurance
+  - Taxation (Income Tax, GST)
+  - Financial Consulting
+  - Business Registration
+  - Accounting Services
+- **About Us**: Firm history, mission, and team profiles
+- **Resources**: Tax calculators, forms, and important updates
+- **Blog**: Financial tips and regulatory updates
+- **Contact**: Contact form, Google Maps, office hours, and phone/email
+
+**Features:**
+- Sticky navigation bar for easy access
+- Service cards with hover effects
+- Testimonials carousel
+- FAQ accordion section
+- Newsletter signup form
+- Social media integration
+- GDPR compliant cookie notice
+- Fast loading with optimized assets
+
+The website is designed to build trust with potential clients, showcase expertise, and provide easy access to important financial resources. The clean, professional design reflects the seriousness and reliability expected from a CA firm.`,
+      images: [
+        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
+        "data:image/jpeg;base64,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",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6IZG6zrs4hiq-t4e4oyAblk4GlZgn35BsyA&s",
+        "https://www.shutterstock.com/image-photo/efficient-african-american-accountant-using-600nw-2604751891.jpg"
+      ]
     }
   ]).current;
 
-  // Memoized slider images
+  // Memoized slider images (updated with 2 new images)
   const sliderImages = useRef([
     "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1522881193457-37ae97c905bf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    "https://images.unsplash.com/photo-1555529669-e69e7aa56ba9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
+    "https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80"
   ]).current;
 
   // Optimized animations
@@ -465,7 +593,7 @@ The site is optimized for performance with lazy loading, image optimization, and
           <div className="relative flex items-center justify-center w-full h-40 sm:h-52 md:h-60 lg:h-72 overflow-hidden">
             {sliderImages.map((img, i) => {
               const offset = i - centerIndex;
-              const adjustedOffset = offset < -2 ? offset + 5 : offset > 2 ? offset - 5 : offset;
+              const adjustedOffset = offset < -2 ? offset + 7 : offset > 2 ? offset - 7 : offset;
               const absOffset = Math.abs(adjustedOffset);
               const imageSize = getSliderImageSize();
               const offsetValue = getSliderOffset();
@@ -500,18 +628,18 @@ The site is optimized for performance with lazy loading, image optimization, and
           </div>
         </div>
 
-        {/* Projects Grid */}
+        {/* Projects Grid - Updated to 3 columns on large screens */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate={isVisible ? "visible" : "hidden"}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-10 md:mt-12"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-10 md:mt-12"
         >
           {projects.map((project, idx) => (
             <motion.div
               key={idx}
               variants={itemVariants}
-              className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-teal-400/30 transition-all duration-200 cursor-pointer group"
+              className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-teal-400/30 transition-all duration-200 cursor-pointer group h-full flex flex-col"
               whileHover={!isMobile ? { y: -3 } : {}}
               onClick={() => {
                 setSelectedProject(project);
@@ -528,7 +656,7 @@ The site is optimized for performance with lazy loading, image optimization, and
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {project.techStack.map((tech, i) => (
+                {project.techStack.slice(0, 4).map((tech, i) => (
                   <motion.span
                     key={i}
                     custom={i}
@@ -540,22 +668,30 @@ The site is optimized for performance with lazy loading, image optimization, and
                     {tech}
                   </motion.span>
                 ))}
+                {project.techStack.length > 4 && (
+                  <span className="bg-slate-700/50 text-slate-300 text-xs px-3 py-1 rounded-full">
+                    +{project.techStack.length - 4}
+                  </span>
+                )}
               </div>
 
-              <p className="text-slate-300 text-base mb-4 leading-relaxed">
+              <p className="text-slate-300 text-base mb-4 leading-relaxed flex-grow">
                 {project.description}
               </p>
 
               <ul className="space-y-2 text-slate-300 text-sm mb-6">
-                {project.points.map((point, i) => (
+                {project.points.slice(0, 2).map((point, i) => (
                   <li key={i} className="flex items-start">
                     <span className="text-teal-400 mr-2">•</span>
                     <span>{point}</span>
                   </li>
                 ))}
+                {project.points.length > 2 && (
+                  <li className="text-teal-400 text-sm">+{project.points.length - 2} more features</li>
+                )}
               </ul>
 
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex gap-3 flex-wrap mt-auto">
                 <button
                   className="flex items-center gap-2 bg-teal-600/80 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-full transition"
                 >
