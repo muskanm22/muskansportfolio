@@ -64,7 +64,7 @@ const Experience: React.FC = () => {
       logo: starsOfTechLogo,
       company: 'StarsOfTech Pvt. Ltd.',
       title: 'Software Engineering ',
-      date: 'July 2025 – December 2025',
+      date: 'July 2025 – Continue',
       location: 'Remote / Live Project',
       link: 'https://starsoftech.com/',
       description: (
